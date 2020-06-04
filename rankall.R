@@ -1,77 +1,46 @@
-setwd("D:/R_programming/week4_progg_assignment")
-datas <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
-datas<- data[c(2,7,11,17,23)]
-
-names(datas)[1] <- "name"
-names(datas)[2] <- "State"
-names(datas)[3] <- "heart attack"
-names(datas)[4] <- "heart failure"
-names(datas)[5] <- "pneumonia"
-
-rankall <- function( outcome , num = "best") {
-  
- 
-  
-  
-
-  
-  
-  
-  
-  co<- data.frame( "name" = character(), "state" = character())
-  
-  if ( num == "best"  ){ num <- 1}
- ## else if (num == "worst"){num <- nrow(d)}
-  else if ( !(num >=1 && num <= nrow(d))){ return(NA)}
-  
-
-                  
-                  p <- 0
-                  datas <- datas[c("name", "State" , outcome)]
-                  
-
-                  #as.numeric(data$outcome)
-                  #data <- data[!is.na(data$outcome),]
-                
-                  if(!(outcome %in% c("heart attack", "heart failure", "pneumonia"))){ return("INVALID OUTCOME")}
-            
-                  states <- unique(datas$State)
-                  
-                 for (i in states) {
-                  p <- (p+1)
-                  
-                  t <- subset(datas, data$State == i)
-                  #t <- t[order(t$name),]
-                 t <- t[order(t$name),]
-                 t <- t[order(t[outcome]),]
-                 
-                 for (r in t[,outcome]) {
-                   
-                   if( r == "Not Available") { r <- NA}
-                   
-                 }
-                 
-                 t <- t[!is.na(t[outcome])]
-                if ( num == "best"  ){ num <- 1}
-                  else if (num == "worst"){num <- nrow(t)}
-                  else if ( num > nrow(t)){ return("NA")}
-                  
-                  
-                  t <- t[num, ]
-                
-                  
-                  co[p,"name"] <- t$name
-                  co[p,"state"] <- i
-                       
-                        
-                         
-                           
-                  
-                 }
-                  
-                  co <- co[order(co$state),]
-             return(co)
-                
-  
-  
+rankhospital <- function(state, outcome, num = "best") {
+        ## Reading the outcome data
+        data <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+        ## Selecting the columns that are reqiured and naming them
+        data <- data[c(2, 7, 11, 17, 23)]
+        names(data)[1] <- "name"
+        names(data)[2] <- "state"
+        names(data)[3] <- "heart attack"
+        names(data)[4] <- "heart failure"
+        names(data)[5] <- "pneumonia"
+        
+        ## Validating the outcome string
+        outcomes = c("heart attack", "heart failure", "pneumonia")
+        if(outcome %in% outcomes == FALSE) stop("invalid outcome")
+        
+        ## Validating the state string
+        states <- data[, 2]
+        states <- unique(states)
+        if(state %in% states == FALSE) stop("invalid state")
+        
+        ## Validating the num value
+        if(num != "best" && num != "worst" && num%%1 != 0) stop("invalid num")
+        
+        ## Grab only those rows which matches the reqiured state value and 
+        ## whose data is available    
+        data <- data[data$state==state & data[outcome] != 'Not Available', ]
+        
+        ## Ordering the data in ascending order, first according to the names 
+        ## column and then according to their ranks for the specific outcome column
+        data[outcome] <- as.data.frame(sapply(data[outcome], as.numeric))
+        data <- data[order(data$name, decreasing = FALSE), ]
+        data <- data[order(data[outcome], decreasing = FALSE), ]
+        
+        ## Processing the num argument for various conditions
+        vals <- data[, outcome]
+        if(num == "best"){
+                rowNum <- which.min(vals)
+        }else if(num == "worst"){
+                rowNum <- which.max(vals)
+        }else{
+                rowNum <- num
+        }
+        
+        ## Return hospital name in that state with lowest 30-day death rate
+        data[rowNum, ]$name
 }
